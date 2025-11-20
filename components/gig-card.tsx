@@ -39,21 +39,21 @@ export function GigCard({ gig, walletAddress, onReleaseFunds, onRefund }: GigCar
     switch (gig.status) {
       case "pending":
         return (
-          <Badge className="bg-[oklch(0.75_0.15_80)] text-[oklch(0.15_0_0)] hover:bg-[oklch(0.75_0.15_80)] text-xs whitespace-nowrap">
+          <Badge className="bg-[oklch(0.75_0.15_80)] text-[oklch(0.15_0_0)] hover:bg-[oklch(0.75_0.15_80)] text-xs whitespace-nowrap rounded-full px-3 py-1">
             <Clock className="mr-1 h-3 w-3" />
             Pending
           </Badge>
         )
       case "completed":
         return (
-          <Badge className="bg-[oklch(0.65_0.18_145)] text-[oklch(0.99_0_0)] hover:bg-[oklch(0.65_0.18_145)] text-xs whitespace-nowrap">
+          <Badge className="bg-[oklch(0.65_0.18_145)] text-[oklch(0.99_0_0)] hover:bg-[oklch(0.65_0.18_145)] text-xs whitespace-nowrap rounded-full px-3 py-1">
             <CheckCircle className="mr-1 h-3 w-3" />
             Completed
           </Badge>
         )
       case "refunded":
         return (
-          <Badge variant="destructive" className="text-xs whitespace-nowrap">
+          <Badge variant="destructive" className="text-xs whitespace-nowrap rounded-full px-3 py-1">
             <XCircle className="mr-1 h-3 w-3" />
             Refunded
           </Badge>
@@ -75,11 +75,13 @@ export function GigCard({ gig, walletAddress, onReleaseFunds, onRefund }: GigCar
   }
 
   return (
-    <Card className="border-2 hover:border-primary/50 transition-colors w-full">
+    <Card className="border-2 hover:border-primary/50 transition-all duration-300 w-full rounded-2xl bg-card/50 backdrop-blur-sm shadow-lg hover:shadow-xl">
       <CardHeader className="pb-3 sm:pb-4">
         <div className="flex items-start justify-between gap-2 sm:gap-4">
           <div className="space-y-1 min-w-0 flex-1">
-            <h3 className="font-semibold text-base sm:text-lg">Gig #{gig.id}</h3>
+            <h3 className="font-semibold text-base sm:text-lg bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Gig #{gig.id}
+            </h3>
             <p className="text-xs sm:text-sm text-muted-foreground">
               {isClient ? "You are the Client" : isFreelancer ? "You are the Freelancer" : "Observer"}
             </p>
@@ -92,9 +94,13 @@ export function GigCard({ gig, walletAddress, onReleaseFunds, onRefund }: GigCar
         <div className="space-y-1.5 text-sm">
           <p className="text-muted-foreground text-xs sm:text-sm break-all">
             {isClient ? "Freelancer: " : "Client: "}
-            <span className="font-mono">{truncateAddress(isClient ? gig.freelancer : gig.client)}</span>
+            <span className="font-mono bg-muted/50 px-2 py-0.5 rounded-lg">
+              {truncateAddress(isClient ? gig.freelancer : gig.client)}
+            </span>
           </p>
-          <p className="text-xl sm:text-2xl font-bold text-primary">{gig.amount} USDC</p>
+          <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            {gig.amount} USDC
+          </p>
         </div>
       </CardContent>
 
@@ -104,7 +110,7 @@ export function GigCard({ gig, walletAddress, onReleaseFunds, onRefund }: GigCar
             <AlertDialogTrigger asChild>
               <Button
                 disabled={isProcessing}
-                className="w-full sm:flex-1 bg-[oklch(0.65_0.18_145)] text-[oklch(0.99_0_0)] hover:bg-[oklch(0.60_0.18_145)] text-sm h-10"
+                className="w-full sm:flex-1 bg-[oklch(0.65_0.18_145)] text-[oklch(0.99_0_0)] hover:bg-[oklch(0.60_0.18_145)] text-sm h-10 rounded-xl shadow-md hover:shadow-lg transition-all"
               >
                 {isProcessing ? (
                   <>
@@ -119,7 +125,7 @@ export function GigCard({ gig, walletAddress, onReleaseFunds, onRefund }: GigCar
                 )}
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+            <AlertDialogContent className="max-w-[90vw] sm:max-w-md rounded-2xl">
               <AlertDialogHeader>
                 <AlertDialogTitle>Release Payment?</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -141,12 +147,16 @@ export function GigCard({ gig, walletAddress, onReleaseFunds, onRefund }: GigCar
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button disabled={isProcessing} variant="destructive" className="w-full sm:flex-1 text-sm h-10">
+              <Button
+                disabled={isProcessing}
+                variant="destructive"
+                className="w-full sm:flex-1 text-sm h-10 rounded-xl shadow-md hover:shadow-lg transition-all"
+              >
                 <XCircle className="mr-2 h-4 w-4" />
                 Request Refund
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+            <AlertDialogContent className="max-w-[90vw] sm:max-w-md rounded-2xl">
               <AlertDialogHeader>
                 <AlertDialogTitle>Request Refund?</AlertDialogTitle>
                 <AlertDialogDescription>

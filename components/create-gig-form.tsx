@@ -75,10 +75,12 @@ export function CreateGigForm({ onCreateGig }: CreateGigFormProps) {
   const isFormValid = freelancerAddress && description && amount && Number.parseFloat(amount) > 0
 
   return (
-    <Card className="h-fit">
+    <Card className="h-fit rounded-2xl bg-card/50 backdrop-blur-sm shadow-lg border-2">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Briefcase className="h-5 w-5 text-primary" />
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Briefcase className="h-5 w-5 text-primary" />
+          </div>
           Hire a Freelancer
         </CardTitle>
         <CardDescription>Create a new gig and deposit USDC into escrow</CardDescription>
@@ -95,7 +97,7 @@ export function CreateGigForm({ onCreateGig }: CreateGigFormProps) {
                 setFreelancerAddress(e.target.value)
                 setErrors((prev) => ({ ...prev, freelancerAddress: "" }))
               }}
-              className="font-mono text-sm"
+              className="font-mono text-sm rounded-xl"
               disabled={isLoading}
             />
             {errors.freelancerAddress && <p className="text-xs text-destructive">{errors.freelancerAddress}</p>}
@@ -112,6 +114,7 @@ export function CreateGigForm({ onCreateGig }: CreateGigFormProps) {
                 setErrors((prev) => ({ ...prev, description: "" }))
               }}
               rows={4}
+              className="rounded-xl"
               disabled={isLoading}
             />
             {errors.description && <p className="text-xs text-destructive">{errors.description}</p>}
@@ -130,6 +133,7 @@ export function CreateGigForm({ onCreateGig }: CreateGigFormProps) {
               }}
               min="0"
               step="0.01"
+              className="rounded-xl"
               disabled={isLoading}
             />
             {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
@@ -137,7 +141,7 @@ export function CreateGigForm({ onCreateGig }: CreateGigFormProps) {
 
           <Button
             type="submit"
-            className="w-full bg-[oklch(0.65_0.18_145)] text-[oklch(0.99_0_0)] hover:bg-[oklch(0.60_0.18_145)] disabled:opacity-50"
+            className="w-full bg-[oklch(0.65_0.18_145)] text-[oklch(0.99_0_0)] hover:bg-[oklch(0.60_0.18_145)] disabled:opacity-50 rounded-xl h-11 shadow-md hover:shadow-lg transition-all"
             disabled={!isFormValid || isLoading}
           >
             {isLoading ? (
