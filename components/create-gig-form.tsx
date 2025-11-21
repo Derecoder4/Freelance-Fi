@@ -1,78 +1,100 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
-import { Briefcase, Loader2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Briefcase, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useToast } from "@/hooks/use-toast"
+
+// Blockchain imports
+import { useWriteContract, useWaitForTransactionReceipt, useAccount, useSwitchChain } from "wagmi"
+import { parseUnits } from "viem"
+import { CONTRACT_ADDRESS, CONTRACT_ABI } from "@/app/constants"
+
+const ARC_TESTNET_CHAIN_ID = 5042002
 
 interface CreateGigFormProps {
-  onCreateGig: (freelancerAddress: string, description: string, amount: number) => void
+  onGigCreated?: () => void
 }
 
-export function CreateGigForm({ onCreateGig }: CreateGigFormProps) {
+export function CreateGigForm({ onGigCreated }: CreateGigFormProps) {
+  const { toast } = useToast()
+  
   const [freelancerAddress, setFreelancerAddress] = useState("")
   const [description, setDescription] = useState("")
   const [amount, setAmount] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState({
-    freelancerAddress: "",
-    description: "",
-    amount: "",
+
+  // Check current chain
+  const { chain } = useAccount()
+  const { switchChain } = useSwitchChain()
+
+  const { data: hash, writeContract, isPending: isWritePending } = useWriteContract()
+  
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
   })
 
-  const validateForm = () => {
-    const newErrors = {
-      freelancerAddress: "",
-      description: "",
-      amount: "",
-    }
+  // Check if on wrong network
+  const isWrongNetwork = chain && chain.id !== ARC_TESTNET_CHAIN_ID
 
-    if (!freelancerAddress) {
-      newErrors.freelancerAddress = "Freelancer address is required"
-    } else if (!/^0x[a-fA-F0-9]{40}$/.test(freelancerAddress)) {
-      newErrors.freelancerAddress = "Invalid Ethereum address format"
+  useEffect(() => {
+    if (isSuccess) {
+      toast({
+        title: "Gig Created!",
+        description: "Your transaction has been confirmed on the blockchain.",
+      })
+      setFreelancerAddress("")
+      setDescription("")
+      setAmount("")
+      onGigCreated?.()
     }
+  }, [isSuccess, toast, onGigCreated])
 
-    if (!description || description.trim().length < 10) {
-      newErrors.description = "Description must be at least 10 characters"
+  const handleSwitchNetwork = () => {
+    if (switchChain) {
+      switchChain({ chainId: ARC_TESTNET_CHAIN_ID })
     }
-
-    if (!amount || Number.parseFloat(amount) <= 0) {
-      newErrors.amount = "Amount must be greater than 0"
-    }
-
-    setErrors(newErrors)
-    return !newErrors.freelancerAddress && !newErrors.description && !newErrors.amount
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) {
+    if (!freelancerAddress || !description || !amount) return
+
+    // Check network before submitting
+    if (isWrongNetwork) {
+      toast({
+        title: "Wrong Network",
+        description: "Please switch to Arc Testnet to create a gig.",
+        variant: "destructive",
+      })
       return
     }
 
-    setIsLoading(true)
-
-    // Simulate transaction delay
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    onCreateGig(freelancerAddress, description, Number.parseFloat(amount))
-
-    // Reset form
-    setFreelancerAddress("")
-    setDescription("")
-    setAmount("")
-    setErrors({ freelancerAddress: "", description: "", amount: "" })
-    setIsLoading(false)
+    try {
+      writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: "createGig",
+        args: [freelancerAddress as `0x${string}`, description],
+        value: parseUnits(amount, 18),
+      })
+    } catch (error) {
+      console.error("Transaction failed:", error)
+      toast({
+        title: "Error",
+        description: "Failed to send transaction. Check console.",
+        variant: "destructive",
+      })
+    }
   }
 
   const isFormValid = freelancerAddress && description && amount && Number.parseFloat(amount) > 0
+  const isLoading = isWritePending || isConfirming
 
   return (
     <Card className="h-fit rounded-2xl bg-card/50 backdrop-blur-sm shadow-lg border-2">
@@ -86,6 +108,22 @@ export function CreateGigForm({ onCreateGig }: CreateGigFormProps) {
         <CardDescription>Create a new gig and deposit USDC into escrow</CardDescription>
       </CardHeader>
       <CardContent>
+        {isWrongNetwork && (
+          <Alert className="mb-4 border-destructive/50 bg-destructive/10">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            <AlertDescription className="text-sm">
+              <strong>Wrong Network!</strong> You're on {chain?.name || "an unsupported network"}. 
+              <Button
+                variant="link"
+                className="p-0 h-auto ml-1 text-destructive underline"
+                onClick={handleSwitchNetwork}
+              >
+                Switch to Arc Testnet
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="freelancer-address">Freelancer Address</Label>
@@ -93,14 +131,10 @@ export function CreateGigForm({ onCreateGig }: CreateGigFormProps) {
               id="freelancer-address"
               placeholder="0x..."
               value={freelancerAddress}
-              onChange={(e) => {
-                setFreelancerAddress(e.target.value)
-                setErrors((prev) => ({ ...prev, freelancerAddress: "" }))
-              }}
+              onChange={(e) => setFreelancerAddress(e.target.value)}
               className="font-mono text-sm rounded-xl"
               disabled={isLoading}
             />
-            {errors.freelancerAddress && <p className="text-xs text-destructive">{errors.freelancerAddress}</p>}
           </div>
 
           <div className="space-y-2">
@@ -109,15 +143,11 @@ export function CreateGigForm({ onCreateGig }: CreateGigFormProps) {
               id="job-description"
               placeholder="e.g., Fix my website's landing page"
               value={description}
-              onChange={(e) => {
-                setDescription(e.target.value)
-                setErrors((prev) => ({ ...prev, description: "" }))
-              }}
+              onChange={(e) => setDescription(e.target.value)}
               rows={4}
               className="rounded-xl"
               disabled={isLoading}
             />
-            {errors.description && <p className="text-xs text-destructive">{errors.description}</p>}
           </div>
 
           <div className="space-y-2">
@@ -127,28 +157,26 @@ export function CreateGigForm({ onCreateGig }: CreateGigFormProps) {
               type="number"
               placeholder="150"
               value={amount}
-              onChange={(e) => {
-                setAmount(e.target.value)
-                setErrors((prev) => ({ ...prev, amount: "" }))
-              }}
+              onChange={(e) => setAmount(e.target.value)}
               min="0"
               step="0.01"
               className="rounded-xl"
               disabled={isLoading}
             />
-            {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
           </div>
 
           <Button
             type="submit"
             className="w-full bg-[oklch(0.65_0.18_145)] text-[oklch(0.99_0_0)] hover:bg-[oklch(0.60_0.18_145)] disabled:opacity-50 rounded-xl h-11 shadow-md hover:shadow-lg transition-all"
-            disabled={!isFormValid || isLoading}
+            disabled={!isFormValid || isLoading || isWrongNetwork}
           >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating Gig...
+                {isConfirming ? "Confirming on-chain..." : "Check Wallet..."}
               </>
+            ) : isWrongNetwork ? (
+              "Switch to Arc Testnet First"
             ) : (
               "Create & Deposit Funds"
             )}

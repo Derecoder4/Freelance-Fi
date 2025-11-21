@@ -1,19 +1,15 @@
 "use client"
 
 import Image from "next/image"
-import { Wallet, LogOut } from "lucide-react"
+import { usePrivy } from "@privy-io/react-auth"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { LogOut, Wallet } from "lucide-react"
+import Link from "next/link"
 
-interface HeaderProps {
-  isConnected: boolean
-  walletAddress: string
-  onConnect: () => void
-  onDisconnect: () => void
-}
+export function Header() {
+  const { login, authenticated, user, logout } = usePrivy()
 
-export function Header({ isConnected, walletAddress, onConnect, onDisconnect }: HeaderProps) {
-  const truncateAddress = (address: string) => {
+  const truncateAddress = (address: string | undefined) => {
     if (!address) return ""
     return `${address.slice(0, 6)}...${address.slice(-4)}`
   }
@@ -22,56 +18,46 @@ export function Header({ isConnected, walletAddress, onConnect, onDisconnect }: 
     <header className="border-b border-border bg-card">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 sm:h-16 items-center justify-between gap-2">
+          
+          {/* Logo */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Image
-              src="/images/creat-a-professional-logo-for-a-feelance-csr5jyl-q0gmk8l4x-ai0a-yaeaxig5rpytcsdtj8ioda.jpeg"
-              alt="Freelance-Fi"
-              width={40}
-              height={40}
-              className="rounded-full w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 object-cover"
-            />
-            <span className="text-base sm:text-xl font-bold text-foreground truncate">Freelance-Fi</span>
+            <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden">
+               <Image
+                src="/icon.svg" 
+                alt="Freelance-Fi"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-base sm:text-xl font-bold text-foreground truncate">
+                Freelance-Fi
+              </span>
+              <Link href="/admin" className="text-[10px] text-muted-foreground hover:text-primary transition-colors">
+                Mediator Dashboard
+              </Link>
+            </div>
           </div>
 
-          <div className="flex-shrink-0 flex items-center gap-2">
-            {isConnected && (
-              <Badge variant="outline" className="hidden sm:flex bg-green-500/10 text-green-600 border-green-500/20">
-                <div className="w-2 h-2 rounded-full bg-green-500 mr-1.5 animate-pulse" />
-                Connected
-              </Badge>
-            )}
-
-            {isConnected ? (
+          {/* Connect Button */}
+          <div className="flex-shrink-0 flex gap-2">
+            {authenticated ? (
               <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onDisconnect}
-                  className="text-muted-foreground hover:text-foreground"
-                  title="Disconnect Wallet"
-                >
+                <div className="px-4 py-2 bg-muted rounded-md text-sm font-mono">
+                  {truncateAddress(user?.wallet?.address)}
+                </div>
+                <Button variant="outline" size="icon" onClick={logout} title="Logout">
                   <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline ml-2">Disconnect</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="font-mono text-xs sm:text-sm bg-transparent px-2 sm:px-4 pointer-events-none"
-                >
-                  <Wallet className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">{truncateAddress(walletAddress)}</span>
                 </Button>
               </div>
             ) : (
-              <Button
-                onClick={onConnect}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm px-3 sm:px-4"
-              >
-                <Wallet className="h-4 w-4 sm:mr-2" />
-                <span className="hidden xs:inline sm:inline">Connect</span>
-                <span className="hidden sm:inline">&nbsp;Wallet</span>
+              <Button onClick={login} className="gap-2">
+                <Wallet className="h-4 w-4" />
+                Connect Wallet
               </Button>
             )}
           </div>
+
         </div>
       </div>
     </header>
